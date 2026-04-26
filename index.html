@@ -2349,28 +2349,46 @@
         const startTarget = controls.target.clone();
         const startTime = performance.now();
 
-        // Distance-based timing — VERY SLOW, cinematic, 28 constellations
+        // Distance-based timing
         const travelDist = startPos.distanceTo(camPos);
         const distFactor = Math.max(1, travelDist / 30);
-        const approachDur = 3000 + Math.min(2500, distFactor * 600);
-        const holdDur = 5000;
-        const departDur = 1500;
+        const approachDur = 5000 + Math.min(3000, distFactor * 800);
+        const holdMinDur = 10000;  // minimum 10s hold
+        const departDur = 2500;
 
         // Warp + sound
         if (index > 0) {
-            const warpDur = approachDur * 0.65;
+            const warpDur = approachDur * 0.6;
             const intensity = Math.min(1.5, distFactor * 0.35);
             activateWarp(intensity, warpDur);
             playWhoosh(warpDur, intensity);
         }
 
+        // Track narration completion
+        let narrationDone = false;
+        let holdTimerDone = false;
+
         // Narration when arriving
-        const narrateDelay = approachDur * 0.7;
+        const narrateDelay = approachDur * 0.75;
         cTourTimeout = setTimeout(() => {
             if (!cTourActive) return;
             playArrivalChime(index % 9);
             playSubHit();
-            speakNarration(`Ini adalah rasi bintang ${con.name}. ${con.desc}`);
+
+            const text = `Ini adalah rasi bintang ${con.name}. ${con.desc}`;
+            if (window.speechSynthesis) {
+                window.speechSynthesis.cancel();
+                const utter = new SpeechSynthesisUtterance(text);
+                utter.lang = 'id-ID'; utter.rate = 0.85; utter.pitch = 0.9; utter.volume = 1.0;
+                const voices = window.speechSynthesis.getVoices();
+                const v = voices.find(v => v.lang.startsWith('id')) || voices.find(v => v.lang.startsWith('ms')) || null;
+                if (v) utter.voice = v;
+                utter.onend = () => { narrationDone = true; };
+                utter.onerror = () => { narrationDone = true; };
+                window.speechSynthesis.speak(utter);
+            } else {
+                narrationDone = true;
+            }
         }, narrateDelay);
 
         let phase = 'approach';
@@ -2385,19 +2403,19 @@
                 // Slow start, dramatic middle, gentle arrival
                 let ease;
                 if (t < 0.2) ease = 1.5*t*t;
-                else if (t < 0.6) { const m=(t-0.2)/0.4; ease = 0.06+m*m*0.45; }
-                else { const e=(t-0.6)/0.4; ease = 0.51+(1-Math.pow(1-e,4))*0.49; }
+                else if (t < 0.55) { const m=(t-0.2)/0.35; ease = 0.06+m*m*0.44; }
+                else { const e=(t-0.55)/0.45; ease = 0.5+(1-Math.pow(1-e,4))*0.5; }
 
                 camera.position.lerpVectors(startPos, camPos, ease);
                 controls.target.lerpVectors(startTarget, center, ease);
 
                 // FOV: widen during travel, narrow on arrival
-                if (t < 0.2) camera.fov = 60+t/0.2*12;
-                else if (t < 0.6) camera.fov = 72-((t-0.2)/0.4)*8;
-                else camera.fov = 64-((t-0.6)/0.4)*14;
+                if (t < 0.2) camera.fov = 60+t/0.2*10;
+                else if (t < 0.55) camera.fov = 70-((t-0.2)/0.35)*6;
+                else camera.fov = 64-((t-0.55)/0.45)*14;
                 camera.updateProjectionMatrix();
 
-                if (t > 0.55) { nameEl.className = 'visible'; descEl.className = 'visible'; }
+                if (t > 0.6) { nameEl.className = 'visible'; descEl.className = 'visible'; }
 
                 if (t >= 1) {
                     phase = 'hold'; phaseStart = now;
@@ -2406,24 +2424,43 @@
                 }
             }
             else if (phase === 'hold') {
-                const t = Math.min(1, (now - phaseStart) / holdDur);
-                // Very gentle drift — slowly pan across the constellation
-                holdOrbitAngle += 0.0015;
-                const driftX = Math.sin(holdOrbitAngle) * 8;
-                const driftY = Math.sin(holdOrbitAngle * 0.7) * 4;
+                const elapsed = now - phaseStart;
+                // Very gentle drift
+                holdOrbitAngle += 0.001;
+                const driftX = Math.sin(holdOrbitAngle) * 6;
+                const driftY = Math.sin(holdOrbitAngle * 0.6) * 3;
 
                 camera.position.set(
                     camPos.x + driftX,
                     camPos.y + driftY,
-                    camPos.z + Math.cos(holdOrbitAngle) * 5
+                    camPos.z + Math.cos(holdOrbitAngle) * 4
                 );
                 controls.target.copy(center);
 
-                // Very subtle FOV breathe
-                camera.fov = 50 + Math.sin(t*Math.PI*2)*1.5;
+                const breathT = elapsed / 10000;
+                camera.fov = 50 + Math.sin(breathT*Math.PI*2)*1.2;
                 camera.updateProjectionMatrix();
 
-                if (t >= 1) {
+                // Check: minimum time passed?
+                if (elapsed >= holdMinDur) holdTimerDone = true;
+
+                // Only depart when BOTH timer done AND narration done
+                if (holdTimerDone && narrationDone) {
+                    // Extra 1.5s pause after narration ends
+                    phase = 'pause-before-depart'; phaseStart = now;
+                }
+            }
+            else if (phase === 'pause-before-depart') {
+                // Keep drifting gently for 1.5s after narration
+                holdOrbitAngle += 0.001;
+                camera.position.set(
+                    camPos.x + Math.sin(holdOrbitAngle)*6,
+                    camPos.y + Math.sin(holdOrbitAngle*0.6)*3,
+                    camPos.z + Math.cos(holdOrbitAngle)*4
+                );
+                controls.target.copy(center);
+
+                if (now - phaseStart >= 1500) {
                     phase = 'depart'; phaseStart = now;
                     nameEl.className = 'fadeout'; descEl.className = 'fadeout';
                     playDepartSound();
@@ -2433,18 +2470,17 @@
                 let t = Math.min(1, (now - phaseStart) / departDur);
                 const ease = 1 - Math.pow(1-t, 3);
 
-                // Slowly pull back upward
                 const pullTarget = camPos.clone();
-                pullTarget.y += 30;
-                pullTarget.x *= 0.8;
-                pullTarget.z *= 0.8;
-                camera.position.lerp(pullTarget, ease * 0.04);
-                controls.target.lerp(new THREE.Vector3(0, 25, 0), ease * 0.03);
+                pullTarget.y += 25;
+                pullTarget.x *= 0.85;
+                pullTarget.z *= 0.85;
+                camera.position.lerp(pullTarget, ease * 0.035);
+                controls.target.lerp(new THREE.Vector3(0, 25, 0), ease * 0.025);
                 camera.fov = 50 + ease*10;
                 camera.updateProjectionMatrix();
 
                 if (t >= 1) {
-                    cTourTimeout = setTimeout(() => cTourVisit(index+1), 200);
+                    cTourTimeout = setTimeout(() => cTourVisit(index+1), 300);
                     return;
                 }
             }
