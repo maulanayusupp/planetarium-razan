@@ -301,7 +301,7 @@
     const PLANET_DATA = [
         {
             name: 'Matahari', type: 'star', radius: 4, distance: 0, speed: 0,
-            color: 0xffdd44, emissive: 0xffaa00, rotationSpeed: 0.002,
+            color: 0xff7722, emissive: 0xff5500, rotationSpeed: 0.002,
             subtitle: 'Bintang Kerdil Kuning — Tipe G2V',
             info: {
                 'Fisik': { 'Diameter': '1.392.700 km', 'Massa': '1,989 × 10³⁰ kg', 'Volume': '1,41 × 10¹⁸ km³', 'Gravitasi Permukaan': '274 m/s²', 'Kecepatan Lepas': '617,7 km/s' },
@@ -504,17 +504,45 @@
             for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
                 const u = x/S, v = y/S;
                 const n1 = fbm(u*6, v*6, 1, 6);
-                const n2 = fbm(u*12, v*3, 2, 4);
+                const n2 = fbm(u*12, v*3, 2, 5);
                 const gran = fbm(u*30, v*30, 3, 3);
-                const bright = 0.5 + n1*0.3 + n2*0.15 + gran*0.05;
-                px(x,y, clamp(220+bright*35), clamp(160+bright*60-n2*30), clamp(10+bright*40));
+                const cell = fbm(u*18, v*18, 4, 4);
+                const plage = fbm(u*4, v*4, 5, 3);
+                const bright = 0.4 + n1*0.25 + n2*0.15 + gran*0.08 + cell*0.07;
+                // Deep orange base — NOT yellow
+                const r = clamp(240 + bright*15 + plage*10);
+                const g = clamp(110 + bright*55 + n1*30 - n2*15 + cell*10);
+                const b = clamp(5 + bright*25 + gran*8);
+                px(x,y, r, g, b);
             }
             ctx.putImageData(img,0,0);
-            for (let i = 0; i < 6; i++) {
-                const sx=S*0.15+Math.random()*S*0.7, sy=S*0.2+Math.random()*S*0.6, sr=8+Math.random()*18;
-                const gr=ctx.createRadialGradient(sx,sy,0,sx,sy,sr);
-                gr.addColorStop(0,'rgba(60,20,0,0.5)'); gr.addColorStop(0.5,'rgba(100,40,0,0.25)'); gr.addColorStop(1,'rgba(180,90,0,0)');
+            // Solar granulation highlights
+            for (let i = 0; i < 300; i++) {
+                const sx=Math.random()*S, sy=Math.random()*S;
+                const gr=ctx.createRadialGradient(sx,sy,0, sx,sy, 2+Math.random()*5);
+                gr.addColorStop(0,`rgba(255,${160+Math.random()*40|0},${20+Math.random()*20|0},${0.08+Math.random()*0.1})`);
+                gr.addColorStop(1,'rgba(255,120,0,0)');
+                ctx.fillStyle=gr; ctx.fillRect(sx-6,sy-6,12,12);
+            }
+            // Sunspots — dark cool regions
+            for (let i = 0; i < 8; i++) {
+                const sx=S*0.1+Math.random()*S*0.8, sy=S*0.15+Math.random()*S*0.7;
+                const sr=6+Math.random()*20;
+                // Umbra (dark core)
+                const gr=ctx.createRadialGradient(sx,sy,0, sx,sy,sr);
+                gr.addColorStop(0,'rgba(40,12,0,0.65)');
+                gr.addColorStop(0.4,'rgba(70,25,0,0.4)');
+                gr.addColorStop(0.7,'rgba(130,50,5,0.2)');
+                gr.addColorStop(1,'rgba(200,80,10,0)');
                 ctx.fillStyle=gr; ctx.fillRect(sx-sr,sy-sr,sr*2,sr*2);
+            }
+            // Solar flare/prominence streaks
+            for (let i = 0; i < 20; i++) {
+                const fx=Math.random()*S, fy=Math.random()*S;
+                ctx.beginPath(); ctx.moveTo(fx,fy);
+                for (let j=0;j<6;j++) ctx.lineTo(fx+Math.random()*30-15, fy+Math.random()*4-2);
+                ctx.strokeStyle=`rgba(255,${140+Math.random()*40|0},0,${0.06+Math.random()*0.08})`;
+                ctx.lineWidth=1+Math.random()*3; ctx.stroke();
             }
         }
         else if (type === 'mercury') {
@@ -1350,7 +1378,7 @@
         [5.5, 6.5, 8].forEach((r, i) => {
             const g = new THREE.Mesh(
                 new THREE.SphereGeometry(r, 32, 32),
-                new THREE.MeshBasicMaterial({ color: [0xffaa00, 0xff6600, 0xff4400][i], transparent: true, opacity: [0.12, 0.06, 0.025][i], depthWrite: false })
+                new THREE.MeshBasicMaterial({ color: [0xff6600, 0xff4400, 0xdd2200][i], transparent: true, opacity: [0.14, 0.07, 0.03][i], depthWrite: false })
             );
             scene.add(g);
             sunGlows.push(g);
@@ -1361,9 +1389,10 @@
         coronaCanvas.width = coronaCanvas.height = 256;
         const cctx = coronaCanvas.getContext('2d');
         const grad = cctx.createRadialGradient(128,128,30, 128,128,128);
-        grad.addColorStop(0, 'rgba(255,200,50,0.3)');
-        grad.addColorStop(0.5, 'rgba(255,150,30,0.08)');
-        grad.addColorStop(1, 'rgba(255,100,0,0)');
+        grad.addColorStop(0, 'rgba(255,140,20,0.35)');
+        grad.addColorStop(0.4, 'rgba(255,90,10,0.12)');
+        grad.addColorStop(0.7, 'rgba(220,50,0,0.04)');
+        grad.addColorStop(1, 'rgba(180,30,0,0)');
         cctx.fillStyle = grad;
         cctx.fillRect(0,0,256,256);
         const coronaTex = new THREE.CanvasTexture(coronaCanvas);
@@ -1537,7 +1566,7 @@
 
     function createLights() {
         scene.add(new THREE.AmbientLight(0x334466, 0.35));
-        const sunLight = new THREE.PointLight(0xffffff, 1.5, 400);
+        const sunLight = new THREE.PointLight(0xffeedd, 1.5, 400);
         scene.add(sunLight);
     }
 
