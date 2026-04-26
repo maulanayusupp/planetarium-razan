@@ -110,6 +110,17 @@
         }
         #info-panel h3 { font-size: 18px; color: #aaccff; margin-bottom: 4px; font-weight: 400; letter-spacing: 2px; }
         #info-subtitle { font-size: 11px; color: rgba(255,255,255,0.35); letter-spacing: 1px; }
+        #info-collapse {
+            position: absolute; top: 14px; right: 14px;
+            background: rgba(100,150,255,0.12); border: 1px solid rgba(100,150,255,0.25);
+            color: rgba(170,204,255,0.7); width: 28px; height: 28px; border-radius: 6px;
+            cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center;
+            transition: all 0.3s;
+        }
+        #info-collapse:hover { background: rgba(100,150,255,0.25); color: #fff; }
+        #info-body { overflow: hidden; }
+        #info-panel.collapsed #info-body { display: none; }
+        #info-panel.collapsed #info-collapse { transform: rotate(180deg); }
         #info-content { padding: 8px 20px 16px; }
         .info-section-title {
             font-size: 10px; color: rgba(100,150,255,0.6); letter-spacing: 2px;
@@ -334,16 +345,28 @@
             .mob-speed-btn:active { background: rgba(100,150,255,0.35); }
             #mob-speed-val { font-size: 11px; color: rgba(255,255,255,0.5); min-width: 40px; text-align: center; }
 
-            /* Info panel mobile */
+            /* Info panel mobile — compact, above toolbar */
             #info-panel {
-                width: calc(100% - 20px); left: 10px; right: 10px;
-                top: auto; bottom: 80px;
-                max-height: 45vh; border-radius: 10px;
+                width: calc(100% - 16px); left: 8px; right: 8px;
+                top: auto; bottom: 115px;
+                max-height: 30vh; border-radius: 10px;
+                font-size: 11px;
             }
+            #info-header { padding: 10px 14px 8px; }
+            #info-panel h3 { font-size: 15px; }
+            #info-content { padding: 6px 14px 10px; }
+            #info-description { padding: 6px 14px 10px; font-size: 11px; }
 
-            /* Follow bar */
-            #follow-bar { bottom: 75px; padding: 6px 12px; gap: 8px; }
+            /* Speed bar above toolbar */
+            #mobile-speed { bottom: 58px; }
+
+            /* Follow bar — top of screen on mobile */
+            #follow-bar {
+                bottom: auto; top: 50px; left: 50%; transform: translateX(-50%);
+                padding: 5px 14px; gap: 6px; border-radius: 8px;
+            }
             #follow-bar .follow-text { font-size: 10px; }
+            #follow-bar .follow-stop { font-size: 10px; padding: 3px 8px; }
 
             /* Tour text smaller */
             #tour-name { font-size: 28px; letter-spacing: 4px; }
@@ -354,7 +377,7 @@
             .tour-dot { width: 6px; height: 6px; }
             .tour-dot.active { width: 8px; height: 8px; }
             #tour-counter { top: 15px; font-size: 10px; }
-            #tour-skip { bottom: 130px; left: 50%; right: auto; transform: translateX(-50%); font-size: 11px; padding: 8px 20px; }
+            #tour-skip { top: 12px; bottom: auto; left: auto; right: 12px; transform: none; font-size: 10px; padding: 6px 14px; }
         }
 
         /* Hide mobile elements on desktop */
@@ -387,9 +410,12 @@
             <div id="info-header">
                 <h3 id="info-name">-</h3>
                 <div id="info-subtitle"></div>
+                <button id="info-collapse" onclick="toggleInfoPanel()">&#9660;</button>
             </div>
-            <div id="info-content"></div>
-            <div id="info-description"></div>
+            <div id="info-body">
+                <div id="info-content"></div>
+                <div id="info-description"></div>
+            </div>
         </div>
         <div id="controls">
             <button class="ctrl-btn" onclick="changeSpeed(-1)">&#9664;&#9664;</button>
@@ -2093,6 +2119,11 @@
         if (idx >= 0) btns[idx].classList.toggle('active', layers[name]);
         scene.traverse(o => { if (o.userData.layer === name) o.visible = layers[name]; });
         if (name === 'labels') labelSprites.forEach(l => l.sprite.visible = layers.labels);
+    }
+
+    // Toggle info panel collapse
+    function toggleInfoPanel() {
+        document.getElementById('info-panel').classList.toggle('collapsed');
     }
 
     // Mobile: cycle through layer toggles
