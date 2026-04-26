@@ -496,7 +496,7 @@
         {
             name: 'Venus', type: 'planet', radius: 0.7, distance: 15, speed: 1.62,
             color: 0xffcc66, orbitColor: 0x554422, rotationSpeed: -0.001,
-            atmosphere: { color: 0xffddaa, opacity: 0.25, scale: 1.08 },
+            atmosphere: { color: 0xeee8cc, opacity: 0.2, scale: 1.08 },
             subtitle: 'Planet Terestrial — Bintang Kejora',
             info: {
                 'Fisik': { 'Diameter': '12.103,6 km', 'Massa': '4,867 × 10²⁴ kg', 'Kepadatan': '5,243 g/cm³', 'Gravitasi Permukaan': '8,87 m/s²', 'Kecepatan Lepas': '10,36 km/s' },
@@ -767,22 +767,27 @@
             });
         }
         else if (type === 'venus') {
+            // Venus: thick sulfuric acid clouds — pale yellowish-white with subtle tan swirls
             for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
                 const u = x/S, v = y/S;
                 const warp = fbm(u*4, v*3, 20, 5);
                 const cloud = fbm(u*8+warp*0.6, v*5+warp*0.3, 21, 5);
                 const fine = fbm(u*16+cloud*0.3, v*10, 22, 3);
-                const bright = 0.4 + cloud*0.35 + fine*0.1 + warp*0.15;
-                px(x,y, clamp(190+bright*50), clamp(155+bright*45), clamp(60+bright*35));
+                const bright = 0.45 + cloud*0.3 + fine*0.1 + warp*0.12;
+                // Pale cream-yellow, not orange
+                const r = clamp(210 + bright*40 + cloud*8);
+                const g = clamp(195 + bright*40 + cloud*5 - fine*5);
+                const b = clamp(150 + bright*45 + warp*10);
+                px(x,y, r, g, b);
             }
             ctx.putImageData(img,0,0);
-            // Swirling cloud bands
-            for (let i = 0; i < 40; i++) {
+            // Subtle swirling cloud bands
+            for (let i = 0; i < 50; i++) {
                 const yy = Math.random()*S;
                 ctx.beginPath(); ctx.moveTo(0,yy);
-                for (let x = 0; x < S; x+=4) ctx.lineTo(x, yy+Math.sin(x*0.015+i*0.8)*15+Math.cos(x*0.008+i*1.3)*8);
-                ctx.strokeStyle=`rgba(255,230,170,${0.03+Math.random()*0.05})`;
-                ctx.lineWidth=4+Math.random()*10; ctx.stroke();
+                for (let x = 0; x < S; x+=4) ctx.lineTo(x, yy+Math.sin(x*0.015+i*0.8)*12+Math.cos(x*0.008+i*1.3)*6);
+                ctx.strokeStyle=`rgba(230,215,175,${0.03+Math.random()*0.05})`;
+                ctx.lineWidth=3+Math.random()*8; ctx.stroke();
             }
         }
         else if (type === 'earth') {
@@ -1993,7 +1998,9 @@
     }
 
     function onClick(e) {
-        if (tourActive) return;
+        if (tourActive || cTourActive) return;
+        // Don't process if clicking on UI elements
+        if (e.target.closest('#info-panel, #controls, #sidebar, #follow-bar, #mobile-toolbar, #mobile-speed')) return;
         raycaster.setFromCamera(mouse, camera);
         const intersects = raycaster.intersectObjects(planets.map(p => p.mesh));
         if (intersects.length > 0) {
