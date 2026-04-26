@@ -285,6 +285,80 @@
             pointer-events: none; z-index: 4;
             background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,10,0.6) 100%);
         }
+
+        /* ===== MOBILE RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            /* Title smaller */
+            #title-bar h1 { font-size: 16px; letter-spacing: 2px; }
+            #title-bar p { font-size: 9px; letter-spacing: 1px; }
+
+            /* Hide desktop controls */
+            #controls { display: none !important; }
+            #sidebar { display: none !important; }
+            #date-display { font-size: 10px; padding: 5px 8px; top: 10px; right: 10px; }
+
+            /* Mobile toolbar */
+            #mobile-toolbar {
+                display: flex !important;
+                position: fixed; bottom: 0; left: 0; width: 100%;
+                background: rgba(5,10,25,0.92); border-top: 1px solid rgba(100,150,255,0.15);
+                backdrop-filter: blur(12px); z-index: 20;
+                padding: 6px 4px 10px; gap: 2px;
+                justify-content: space-around; align-items: center;
+            }
+            .mob-btn {
+                display: flex; flex-direction: column; align-items: center; gap: 2px;
+                background: none; border: none; color: rgba(170,200,255,0.7);
+                padding: 6px 4px; border-radius: 8px; cursor: pointer;
+                font-size: 9px; letter-spacing: 0.5px; transition: all 0.2s;
+                min-width: 48px;
+            }
+            .mob-btn .mob-icon { font-size: 18px; line-height: 1; }
+            .mob-btn:active, .mob-btn.active {
+                background: rgba(100,150,255,0.2); color: #aaddff;
+            }
+
+            /* Mobile speed row */
+            #mobile-speed {
+                display: flex !important;
+                position: fixed; bottom: 68px; left: 50%; transform: translateX(-50%);
+                background: rgba(5,10,25,0.85); border: 1px solid rgba(100,150,255,0.15);
+                border-radius: 10px; padding: 6px 12px; gap: 10px; align-items: center;
+                backdrop-filter: blur(10px); z-index: 20;
+            }
+            .mob-speed-btn {
+                background: rgba(100,150,255,0.15); border: 1px solid rgba(100,150,255,0.25);
+                color: #aaccff; width: 32px; height: 32px; border-radius: 6px;
+                font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+            }
+            .mob-speed-btn:active { background: rgba(100,150,255,0.35); }
+            #mob-speed-val { font-size: 11px; color: rgba(255,255,255,0.5); min-width: 40px; text-align: center; }
+
+            /* Info panel mobile */
+            #info-panel {
+                width: calc(100% - 20px); left: 10px; right: 10px;
+                top: auto; bottom: 80px;
+                max-height: 45vh; border-radius: 10px;
+            }
+
+            /* Follow bar */
+            #follow-bar { bottom: 75px; padding: 6px 12px; gap: 8px; }
+            #follow-bar .follow-text { font-size: 10px; }
+
+            /* Tour text smaller */
+            #tour-name { font-size: 28px; letter-spacing: 4px; }
+            #tour-name.visible { letter-spacing: 8px; }
+            #tour-name.fadeout { letter-spacing: 14px; }
+            #tour-desc { font-size: 11px; letter-spacing: 2px; margin-bottom: 12px; white-space: normal; text-align: center; padding: 0 20px; }
+            #tour-progress { margin-bottom: 80px; gap: 5px; flex-wrap: wrap; justify-content: center; padding: 0 20px; }
+            .tour-dot { width: 6px; height: 6px; }
+            .tour-dot.active { width: 8px; height: 8px; }
+            #tour-counter { top: 15px; font-size: 10px; }
+            #tour-skip { bottom: 12px; right: 12px; font-size: 10px; padding: 6px 12px; }
+        }
+
+        /* Hide mobile elements on desktop */
+        #mobile-toolbar, #mobile-speed { display: none; }
     </style>
 </head>
 <body>
@@ -345,6 +419,22 @@
         <div id="tour-progress"></div>
     </div>
     <button id="tour-skip" onclick="stopTour()">&#10005; Lewati Tour</button>
+
+    <!-- Mobile Toolbar -->
+    <div id="mobile-speed">
+        <button class="mob-speed-btn" onclick="changeSpeed(-1)">&#9664;</button>
+        <button class="mob-speed-btn" onclick="togglePause()" id="mob-pause">&#9646;&#9646;</button>
+        <span id="mob-speed-val">1x</span>
+        <button class="mob-speed-btn" onclick="changeSpeed(1)">&#9654;</button>
+    </div>
+    <div id="mobile-toolbar">
+        <button class="mob-btn" onclick="startTour()"><span class="mob-icon">&#9658;</span>Planet</button>
+        <button class="mob-btn" onclick="startConstellationTour()"><span class="mob-icon">&#9733;</span>Rasi</button>
+        <button class="mob-btn" onclick="toggleMusic()" id="mob-music"><span class="mob-icon">&#9835;</span>Musik</button>
+        <button class="mob-btn" onclick="toggleMobileLayers()"><span class="mob-icon">&#9776;</span>Layer</button>
+        <button class="mob-btn" onclick="resetView()"><span class="mob-icon">&#8962;</span>Reset</button>
+        <button class="mob-btn" onclick="setNow()"><span class="mob-icon">&#9200;</span>Kini</button>
+    </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
@@ -1980,11 +2070,15 @@
         speedIndex = Math.max(0, Math.min(speedLevels.length-1, speedIndex+dir));
         speedMultiplier = speedLevels[speedIndex];
         document.getElementById('speed-display').textContent = speedMultiplier+'x';
+        const mobVal = document.getElementById('mob-speed-val');
+        if (mobVal) mobVal.textContent = speedMultiplier+'x';
     }
     function togglePause() {
         isPaused = !isPaused;
         document.getElementById('pause-btn').innerHTML = isPaused ? '&#9654;' : '&#9646;&#9646;';
         document.getElementById('pause-btn').classList.toggle('active', isPaused);
+        const mobPause = document.getElementById('mob-pause');
+        if (mobPause) mobPause.innerHTML = isPaused ? '&#9654;' : '&#9646;&#9646;';
     }
     function resetView() {
         stopFollow();
@@ -1999,6 +2093,25 @@
         if (idx >= 0) btns[idx].classList.toggle('active', layers[name]);
         scene.traverse(o => { if (o.userData.layer === name) o.visible = layers[name]; });
         if (name === 'labels') labelSprites.forEach(l => l.sprite.visible = layers.labels);
+    }
+
+    // Mobile: cycle through layer toggles
+    let mobileLayerIndex = 0;
+    const mobileLayerNames = ['stars','constellations','orbits','labels','grid'];
+    const mobileLayerLabels = ['Bintang','Konstelasi','Orbit','Label','Grid'];
+    function toggleMobileLayers() {
+        const name = mobileLayerNames[mobileLayerIndex];
+        toggleLayer(name);
+        const state = layers[name] ? 'ON' : 'OFF';
+        // Brief visual feedback
+        const btn = document.querySelectorAll('.mob-btn')[3];
+        if (btn) {
+            btn.innerHTML = `<span class="mob-icon">${layers[name]?'&#9745;':'&#9744;'}</span>${mobileLayerLabels[mobileLayerIndex]}`;
+            setTimeout(() => {
+                btn.innerHTML = '<span class="mob-icon">&#9776;</span>Layer';
+            }, 1200);
+        }
+        mobileLayerIndex = (mobileLayerIndex + 1) % mobileLayerNames.length;
     }
 
     // ============================================================
