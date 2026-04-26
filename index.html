@@ -273,6 +273,7 @@
             <button class="ctrl-btn" onclick="resetView()">&#8962; Reset</button>
             <button class="ctrl-btn" onclick="setNow()">Sekarang</button>
             <button class="ctrl-btn" onclick="startTour()" id="tour-btn">&#9658; Demo Tour</button>
+            <button class="ctrl-btn" onclick="toggleMusic()" id="music-btn">&#9835; Musik</button>
         </div>
         <div id="tooltip"></div>
         <div id="follow-bar">
@@ -1282,6 +1283,74 @@
     function startAmbientDrone() { startBackgroundMusic(); }
     function stopAmbientDrone() { stopBackgroundMusic(); }
 
+    // === GLOBAL MUSIC TOGGLE ===
+    let musicPlaying = false;
+    function toggleMusic() {
+        const btn = document.getElementById('music-btn');
+        if (!musicPlaying) {
+            initAudio();
+            startBackgroundMusic();
+            musicPlaying = true;
+            btn.classList.add('active');
+            btn.innerHTML = '&#9835; Musik On';
+        } else {
+            stopBackgroundMusic();
+            musicPlaying = false;
+            btn.classList.remove('active');
+            btn.innerHTML = '&#9835; Musik';
+        }
+    }
+
+    // === VOICE NARRATION (Speech Synthesis) ===
+    const NARRATION_TEXTS = [
+        'Ini adalah Matahari. Bintang raksasa di pusat tata surya kita.',
+        'Ini adalah Planet Merkurius. Planet terkecil dan terdekat dari Matahari.',
+        'Ini adalah Planet Venus. Planet terpanas di tata surya, dijuluki Bintang Kejora.',
+        'Ini adalah Planet Bumi. Rumah kita, satu-satunya planet yang memiliki kehidupan.',
+        'Ini adalah Planet Mars. Planet Merah dengan gunung tertinggi di tata surya.',
+        'Ini adalah Planet Jupiter. Planet terbesar, sang Raja Planet.',
+        'Ini adalah Planet Saturnus. Planet bercincin yang sangat indah.',
+        'Ini adalah Planet Uranus. Planet es yang berotasi miring.',
+        'Ini adalah Planet Neptunus. Planet terjauh dengan angin terkencang.',
+    ];
+
+    let narrationEnabled = true;
+    let currentUtterance = null;
+
+    function speakNarration(text) {
+        if (!narrationEnabled || !window.speechSynthesis) return;
+        // Cancel any ongoing speech
+        window.speechSynthesis.cancel();
+
+        const utter = new SpeechSynthesisUtterance(text);
+        utter.lang = 'id-ID';
+        utter.rate = 0.85;  // sedikit lebih lambat — lebih megah
+        utter.pitch = 0.9;  // sedikit lebih rendah — lebih dramatic
+        utter.volume = 1.0;
+
+        // Try to find Indonesian or good quality voice
+        const voices = window.speechSynthesis.getVoices();
+        const idVoice = voices.find(v => v.lang.startsWith('id')) ||
+                        voices.find(v => v.lang.startsWith('ms')) ||
+                        voices.find(v => v.name.includes('Google') && v.lang.startsWith('en')) ||
+                        null;
+        if (idVoice) utter.voice = idVoice;
+
+        currentUtterance = utter;
+        window.speechSynthesis.speak(utter);
+    }
+
+    function stopNarration() {
+        if (window.speechSynthesis) window.speechSynthesis.cancel();
+        currentUtterance = null;
+    }
+
+    // Pre-load voices (some browsers need this)
+    if (window.speechSynthesis) {
+        window.speechSynthesis.getVoices();
+        window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+    }
+
     // ============================================================
     // THREE.JS GLOBALS
     // ============================================================
@@ -1822,9 +1891,9 @@
         document.getElementById('info-panel').style.display = 'none';
         controls.enabled = false;
 
-        // Audio
+        // Audio — start music if not already playing
         initAudio();
-        startAmbientDrone();
+        if (!musicPlaying) startAmbientDrone();
         playSubHit();
 
         const prog = document.getElementById('tour-progress');
@@ -1849,7 +1918,9 @@
         document.getElementById('info-panel').style.display = 'none';
         controls.enabled = true;
         camera.fov = 60; camera.updateProjectionMatrix();
-        stopAmbientDrone();
+        stopNarration();
+        // Only stop music if it wasn't playing before tour
+        if (!musicPlaying) stopAmbientDrone();
         cinematicMoveTo(new THREE.Vector3(30,40,60), new THREE.Vector3(0,0,0), 2500);
     }
 
@@ -1860,6 +1931,7 @@
         document.getElementById('tour-counter').textContent = '';
         nameEl.textContent = 'PLANETARIUM RAZAN'; descEl.textContent = 'Menjelajahi keagungan tata surya kita';
         nameEl.className = ''; descEl.className = '';
+        speakNarration('Selamat datang di Planetarium Razan. Mari menjelajahi keagungan tata surya kita.');
 
         const startPos = camera.position.clone();
         const startTarget = controls.target.clone();
@@ -1944,9 +2016,14 @@
             activateWarp(warpIntens, warpDur);
             playWhoosh(warpDur, warpIntens);
         }
-        // Arrival chime — delayed until we're close
+        // Arrival chime + voice narration — delayed until we're close
         const chimeDelay = approachDur * 0.7;
-        tourTimeout = setTimeout(() => { if (tourActive) { playArrivalChime(index); playSubHit(); } }, chimeDelay);
+        tourTimeout = setTimeout(() => {
+            if (!tourActive) return;
+            playArrivalChime(index);
+            playSubHit();
+            speakNarration(NARRATION_TEXTS[index]);
+        }, chimeDelay);
 
         // === MULTI-PHASE ANIMATION ===
         const startPos = camera.position.clone();
@@ -2075,6 +2152,7 @@
         const nameEl = document.getElementById('tour-name');
         const descEl = document.getElementById('tour-desc');
         nameEl.textContent = 'TERIMA KASIH'; descEl.textContent = 'Planetarium Razan — Keagungan Alam Semesta';
+        speakNarration('Terima kasih telah menjelajahi tata surya bersama Planetarium Razan. Keagungan alam semesta menanti untuk dijelajahi.');
         nameEl.className = ''; descEl.className = '';
         document.querySelectorAll('.tour-dot').forEach(d => { d.className = 'tour-dot visited'; });
         document.getElementById('info-panel').style.display = 'none';
