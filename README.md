@@ -11,7 +11,7 @@ Simulasi tata surya interaktif berbasis web dengan visualisasi 3D, animasi sinem
 - **Backsound Orchestral** — Musik latar megah yang bisa diputar kapan saja
 - **Follow Mode** — Klik planet untuk mengikuti pergerakannya secara real-time
 - **Info Detail** — Panel informasi lengkap untuk setiap planet (fisik, atmosfer, orbit, fun fact)
-- **6 Konstelasi** — Orion, Ursa Major, Cassiopeia, Scorpius, Crux, Leo
+- **28 Rasi Bintang** — Orion, Ursa Major, Ursa Minor, Cassiopeia, Cygnus, Scorpius, Crux, Leo, dan banyak lagi
 - **10.000 Bintang** latar belakang
 - **Kontrol Waktu** — Percepat, perlambat, atau pause simulasi
 - **Layer Toggle** — Tampilkan/sembunyikan bintang, konstelasi, orbit, label, grid

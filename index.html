@@ -272,7 +272,8 @@
             <div id="speed-display">1x</div>
             <button class="ctrl-btn" onclick="resetView()">&#8962; Reset</button>
             <button class="ctrl-btn" onclick="setNow()">Sekarang</button>
-            <button class="ctrl-btn" onclick="startTour()" id="tour-btn">&#9658; Demo Tour</button>
+            <button class="ctrl-btn" onclick="startTour()" id="tour-btn">&#9658; Tour Planet</button>
+            <button class="ctrl-btn" onclick="startConstellationTour()" id="ctour-btn">&#9733; Tour Rasi</button>
             <button class="ctrl-btn" onclick="toggleMusic()" id="music-btn">&#9835; Musik</button>
         </div>
         <div id="tooltip"></div>
@@ -434,12 +435,37 @@
     ];
 
     const CONSTELLATIONS = [
-        { name: 'Orion', stars: [[-80,30,-60],[-75,25,-58],[-70,20,-55],[-68,15,-52],[-72,10,-50],[-78,10,-54],[-82,15,-58],[-75,15,-53],[-65,15,-48]], lines: [[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,0],[1,7],[7,8]] },
-        { name: 'Ursa Major', stars: [[40,50,-50],[45,48,-45],[50,50,-40],[52,45,-38],[55,42,-42],[60,40,-48],[58,38,-52]], lines: [[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,3]] },
-        { name: 'Cassiopeia', stars: [[20,60,40],[25,65,35],[30,62,30],[35,67,25],[40,63,20]], lines: [[0,1],[1,2],[2,3],[3,4]] },
-        { name: 'Scorpius', stars: [[-30,-20,70],[-28,-15,68],[-25,-10,65],[-22,-8,60],[-20,-10,55],[-18,-15,50],[-15,-20,48],[-12,-25,50]], lines: [[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7]] },
-        { name: 'Crux', stars: [[10,-40,70],[10,-35,68],[10,-30,70],[7,-35,70],[13,-35,70]], lines: [[0,2],[3,4]] },
-        { name: 'Leo', stars: [[60,25,50],[65,28,45],[68,25,40],[65,20,42],[60,18,48],[55,20,52],[58,15,50]], lines: [[0,1],[1,2],[2,3],[3,4],[4,5],[5,0],[4,6]] }
+        // === LANGIT UTARA ===
+        { name: 'Ursa Major', desc: 'Beruang Besar — berisi asterisme Big Dipper (Biduk) yang terkenal', stars: [[40,55,-50],[44,52,-46],[48,54,-42],[51,49,-39],[54,46,-43],[59,44,-49],[57,42,-53]], lines: [[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,3]] },
+        { name: 'Ursa Minor', desc: 'Beruang Kecil — bintang ujungnya adalah Polaris, penunjuk arah utara', stars: [[15,72,-20],[17,69,-18],[20,67,-15],[22,65,-17],[19,63,-20],[16,65,-22],[14,68,-21]], lines: [[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,3]] },
+        { name: 'Cassiopeia', desc: 'Ratu Cassiopeia — berbentuk huruf W di langit utara', stars: [[20,65,40],[25,70,35],[30,66,30],[35,71,25],[40,67,20]], lines: [[0,1],[1,2],[2,3],[3,4]] },
+        { name: 'Cepheus', desc: 'Raja Cepheus — suami Cassiopeia, berbentuk seperti rumah', stars: [[5,70,30],[10,75,25],[15,72,18],[12,66,20],[7,67,27]], lines: [[0,1],[1,2],[2,3],[3,4],[4,0]] },
+        { name: 'Draco', desc: 'Naga — rasi panjang yang meliuk di sekitar kutub utara', stars: [[25,60,-30],[30,58,-25],[35,55,-20],[38,50,-18],[35,46,-22],[30,48,-28],[28,52,-32],[32,44,-15]], lines: [[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,0],[3,7]] },
+        { name: 'Cygnus', desc: 'Angsa — disebut juga Salib Utara, terbang di sepanjang Bima Sakti', stars: [[-15,60,45],[-10,55,42],[-5,50,40],[-10,50,48],[-10,50,33],[-15,45,38],[-5,45,43]], lines: [[0,1],[1,2],[3,1],[1,4],[5,2],[2,6]] },
+        { name: 'Lyra', desc: 'Kecapi — mengandung Vega, salah satu bintang paling terang di langit', stars: [[-20,55,50],[-18,52,47],[-22,52,47],[-17,48,45],[-23,48,45],[-20,50,43]], lines: [[0,1],[0,2],[1,3],[2,4],[3,5],[4,5]] },
+        { name: 'Perseus', desc: 'Pahlawan Perseus — pembunuh Medusa, dekat Cassiopeia', stars: [[40,55,30],[43,50,27],[46,46,25],[42,43,28],[38,46,32],[44,42,22],[48,40,20]], lines: [[0,1],[1,2],[1,3],[3,4],[2,5],[5,6]] },
+        { name: 'Andromeda', desc: 'Putri Andromeda — mengandung galaksi Andromeda (M31)', stars: [[30,50,40],[35,48,36],[40,45,32],[45,42,28],[38,46,38]], lines: [[0,1],[1,2],[2,3],[1,4]] },
+        { name: 'Pegasus', desc: 'Kuda Bersayap — empat bintang utamanya membentuk Kotak Besar Pegasus', stars: [[30,40,50],[40,40,45],[40,32,45],[30,32,50],[25,36,55],[45,36,40]], lines: [[0,1],[1,2],[2,3],[3,0],[0,4],[1,5]] },
+        // === ZODIAK ===
+        { name: 'Aries', desc: 'Domba — rasi zodiak pertama, penanda awal musim semi', stars: [[55,30,40],[58,28,36],[62,26,33]], lines: [[0,1],[1,2]] },
+        { name: 'Taurus', desc: 'Banteng — mengandung gugus bintang Pleiades dan Hyades', stars: [[-55,35,-50],[-50,32,-45],[-48,28,-42],[-52,30,-48],[-45,34,-40],[-42,30,-38],[-55,38,-48]], lines: [[0,1],[1,2],[1,3],[1,4],[4,5],[0,6]] },
+        { name: 'Gemini', desc: 'Si Kembar — Castor dan Pollux, dua bintang terang kembar', stars: [[-40,45,-40],[-35,42,-36],[-38,38,-38],[-33,35,-34],[-42,38,-42],[-37,32,-36]], lines: [[0,1],[0,2],[1,3],[2,4],[2,5],[3,5]] },
+        { name: 'Leo', desc: 'Singa — salah satu rasi zodiak paling mudah dikenali', stars: [[60,25,50],[65,28,45],[68,25,40],[65,20,42],[60,18,48],[55,20,52],[58,15,50]], lines: [[0,1],[1,2],[2,3],[3,4],[4,5],[5,0],[4,6]] },
+        { name: 'Virgo', desc: 'Perawan — rasi zodiak terbesar, mengandung Spica', stars: [[50,8,60],[55,12,55],[58,8,52],[55,3,55],[60,5,48],[52,0,58],[62,10,46]], lines: [[0,1],[1,2],[1,3],[2,4],[3,5],[4,6]] },
+        { name: 'Libra', desc: 'Timbangan — satu-satunya rasi zodiak yang bukan makhluk hidup', stars: [[30,-5,70],[35,-2,66],[38,-8,63],[33,-10,68]], lines: [[0,1],[1,2],[1,3],[0,3]] },
+        { name: 'Scorpius', desc: 'Kalajengking — rasi spektakuler dengan Antares si bintang merah raksasa', stars: [[-30,-20,70],[-28,-15,68],[-25,-10,65],[-22,-8,60],[-20,-10,55],[-18,-15,50],[-15,-20,48],[-12,-25,50],[-25,-5,63]], lines: [[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[2,8]] },
+        { name: 'Sagittarius', desc: 'Pemanah — mengarah ke pusat galaksi Bima Sakti', stars: [[-45,-25,60],[-42,-20,56],[-38,-22,53],[-40,-28,55],[-35,-18,50],[-36,-25,52],[-43,-30,58]], lines: [[0,1],[1,2],[1,3],[2,4],[3,5],[5,6],[6,0]] },
+        { name: 'Aquarius', desc: 'Pembawa Air — rasi zodiak yang luas di langit selatan', stars: [[10,15,75],[15,18,72],[18,12,70],[14,8,73],[20,15,68],[22,10,66]], lines: [[0,1],[1,2],[2,3],[1,4],[4,5]] },
+        { name: 'Pisces', desc: 'Ikan — dua ikan yang diikat tali, rasi zodiak yang redup', stars: [[35,20,60],[38,24,56],[42,22,53],[40,18,55],[36,16,58],[33,22,62]], lines: [[0,1],[1,2],[2,3],[3,4],[4,0],[1,5]] },
+        // === LANGIT SELATAN ===
+        { name: 'Crux', desc: 'Salib Selatan — rasi terkecil tapi paling ikonik, penunjuk arah selatan', stars: [[10,-42,70],[10,-36,68],[10,-30,70],[6,-36,71],[14,-36,69]], lines: [[0,2],[3,4]] },
+        { name: 'Centaurus', desc: 'Centaurus — mengandung Alpha Centauri, bintang terdekat dari Matahari', stars: [[20,-35,65],[25,-30,62],[28,-25,58],[22,-28,60],[18,-32,67],[30,-20,55],[15,-38,68]], lines: [[0,1],[1,2],[1,3],[3,4],[4,0],[2,5],[0,6]] },
+        { name: 'Canis Major', desc: 'Anjing Besar — mengandung Sirius, bintang paling terang di langit malam', stars: [[-65,10,-55],[-62,5,-52],[-58,2,-48],[-60,-3,-50],[-63,-5,-53],[-55,5,-45],[-67,5,-58]], lines: [[0,1],[1,2],[1,3],[3,4],[2,5],[0,6]] },
+        { name: 'Orion', desc: 'Sang Pemburu — rasi paling terkenal dengan Sabuk Orion dan Nebula Orion', stars: [[-80,32,-60],[-76,27,-58],[-72,22,-55],[-70,17,-52],[-74,12,-50],[-80,12,-55],[-84,17,-59],[-76,17,-54],[-66,17,-48]], lines: [[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,0],[1,7],[7,8]] },
+        { name: 'Canis Minor', desc: 'Anjing Kecil — hanya dua bintang utama, dengan Procyon yang terang', stars: [[-50,30,-40],[-45,27,-36]], lines: [[0,1]] },
+        { name: 'Aquila', desc: 'Elang — mengandung Altair, bagian dari Segitiga Musim Panas', stars: [[-25,30,60],[-22,26,57],[-20,22,55],[-24,24,58],[-18,28,54],[-27,26,62]], lines: [[0,1],[1,2],[1,3],[1,4],[0,5]] },
+        { name: 'Pavo', desc: 'Merak — rasi selatan yang indah, dinamai burung merak', stars: [[-10,-50,65],[-7,-46,62],[-4,-42,60],[-8,-44,63],[-12,-47,66]], lines: [[0,1],[1,2],[1,3],[3,4],[4,0]] },
+        { name: 'Corona Borealis', desc: 'Mahkota Utara — setengah lingkaran bintang yang anggun', stars: [[15,42,55],[18,45,52],[22,46,49],[26,45,46],[29,42,44],[25,40,47]], lines: [[0,1],[1,2],[2,3],[3,4],[4,5]] },
     ];
 
     const TOUR_DESCRIPTIONS = [
@@ -1881,7 +1907,7 @@
     let tourTimeout = null;
 
     function startTour() {
-        if (tourActive) return;
+        if (tourActive || cTourActive) return;
         stopFollow();
         tourActive = true; tourIndex = 0;
         document.getElementById('tour-overlay').classList.add('active');
@@ -2180,6 +2206,285 @@
             else { tourTimeout = setTimeout(stopTour, 3000); }
         }
         tourAnimId = requestAnimationFrame(step);
+    }
+
+    // ============================================================
+    // CONSTELLATION TOUR
+    // ============================================================
+    let cTourActive = false;
+    let cTourIndex = 0;
+    let cTourAnimId = null;
+    let cTourTimeout = null;
+
+    function constellationCenter(con) {
+        const s = con.stars;
+        const len = s.length;
+        return new THREE.Vector3(
+            s.reduce((a,p)=>a+p[0],0)/len,
+            s.reduce((a,p)=>a+p[1],0)/len,
+            s.reduce((a,p)=>a+p[2],0)/len
+        );
+    }
+
+    function startConstellationTour() {
+        if (tourActive || cTourActive) return;
+        stopFollow();
+        cTourActive = true; cTourIndex = 0;
+
+        document.getElementById('tour-overlay').classList.add('active');
+        document.getElementById('cine-top').classList.add('active');
+        document.getElementById('cine-bottom').classList.add('active');
+        document.getElementById('tour-skip').style.display = 'block';
+        document.getElementById('info-panel').style.display = 'none';
+        controls.enabled = false;
+
+        initAudio();
+        if (!musicPlaying) startAmbientDrone();
+        playSubHit();
+
+        // Progress dots
+        const prog = document.getElementById('tour-progress');
+        prog.innerHTML = '';
+        for (let i = 0; i < CONSTELLATIONS.length; i++) {
+            const d = document.createElement('div'); d.className = 'tour-dot'; prog.appendChild(d);
+        }
+
+        cTourShowOverview(() => cTourVisit(0));
+    }
+
+    function stopConstellationTour() {
+        cTourActive = false;
+        if (cTourAnimId) { cancelAnimationFrame(cTourAnimId); cTourAnimId = null; }
+        if (cTourTimeout) { clearTimeout(cTourTimeout); cTourTimeout = null; }
+        document.getElementById('tour-overlay').classList.remove('active');
+        document.getElementById('cine-top').classList.remove('active');
+        document.getElementById('cine-bottom').classList.remove('active');
+        document.getElementById('tour-skip').style.display = 'none';
+        document.getElementById('tour-name').className = '';
+        document.getElementById('tour-desc').className = '';
+        controls.enabled = true;
+        camera.fov = 60; camera.updateProjectionMatrix();
+        stopNarration();
+        if (!musicPlaying) stopAmbientDrone();
+        cinematicMoveTo(new THREE.Vector3(30,40,60), new THREE.Vector3(0,0,0), 2500);
+    }
+
+    // Override stopTour to also handle constellation tour
+    const _origStopTour = stopTour;
+    stopTour = function() {
+        if (cTourActive) { stopConstellationTour(); return; }
+        _origStopTour();
+    };
+
+    function cTourShowOverview(callback) {
+        if (!cTourActive) return;
+        const nameEl = document.getElementById('tour-name');
+        const descEl = document.getElementById('tour-desc');
+        document.getElementById('tour-counter').textContent = '';
+        nameEl.textContent = 'RASI BINTANG';
+        descEl.textContent = 'Menjelajahi pola bintang di langit malam';
+        nameEl.className = ''; descEl.className = '';
+
+        speakNarration('Selamat datang di tur rasi bintang Planetarium Razan. Mari mengenal pola-pola bintang di langit malam.');
+
+        const startPos = camera.position.clone();
+        const startTarget = controls.target.clone();
+        const endPos = new THREE.Vector3(0, 120, 150);
+        const endTarget = new THREE.Vector3(0, 30, 0);
+        const startTime = performance.now();
+
+        cTourTimeout = setTimeout(() => { if (cTourActive) { nameEl.className = 'visible'; descEl.className = 'visible'; } }, 500);
+
+        function step(now) {
+            if (!cTourActive) return;
+            let t = Math.min(1, (now-startTime)/4000);
+            t = t<0.5 ? 16*t*t*t*t*t : 1-Math.pow(-2*t+2,5)/2;
+            camera.position.lerpVectors(startPos, endPos, t);
+            controls.target.lerpVectors(startTarget, endTarget, t);
+            camera.fov = 60+Math.sin(t*Math.PI)*8; camera.updateProjectionMatrix();
+            if (t < 1) { cTourAnimId = requestAnimationFrame(step); }
+            else {
+                camera.fov = 60; camera.updateProjectionMatrix();
+                cTourTimeout = setTimeout(() => {
+                    if (!cTourActive) return;
+                    nameEl.className = 'fadeout'; descEl.className = 'fadeout';
+                    cTourTimeout = setTimeout(() => { if (cTourActive) callback(); }, 1200);
+                }, 2000);
+            }
+        }
+        cTourAnimId = requestAnimationFrame(step);
+    }
+
+    function cTourVisit(index) {
+        if (!cTourActive || index >= CONSTELLATIONS.length) {
+            if (cTourActive) cTourFinale();
+            return;
+        }
+        cTourIndex = index;
+        const con = CONSTELLATIONS[index];
+        const center = constellationCenter(con);
+        const nameEl = document.getElementById('tour-name');
+        const descEl = document.getElementById('tour-desc');
+        document.getElementById('tour-counter').textContent = `${index+1} / ${CONSTELLATIONS.length}`;
+
+        // Update dots
+        document.querySelectorAll('.tour-dot').forEach((d,i) => {
+            d.className = 'tour-dot';
+            if (i < index) d.classList.add('visited');
+            if (i === index) d.classList.add('active');
+        });
+
+        nameEl.textContent = con.name.toUpperCase();
+        descEl.textContent = con.desc || '';
+        nameEl.className = ''; descEl.className = '';
+
+        // Camera: position outside looking toward the constellation
+        const dir = center.clone().normalize();
+        const camDist = 60; // distance from origin, looking inward at the stars
+        const camPos = dir.clone().multiplyScalar(camDist);
+        // Offset slightly upward for better angle
+        camPos.y += 15;
+
+        const startPos = camera.position.clone();
+        const startTarget = controls.target.clone();
+        const startTime = performance.now();
+
+        // Distance-based timing — VERY SLOW, cinematic, 28 constellations
+        const travelDist = startPos.distanceTo(camPos);
+        const distFactor = Math.max(1, travelDist / 30);
+        const approachDur = 3000 + Math.min(2500, distFactor * 600);
+        const holdDur = 5000;
+        const departDur = 1500;
+
+        // Warp + sound
+        if (index > 0) {
+            const warpDur = approachDur * 0.65;
+            const intensity = Math.min(1.5, distFactor * 0.35);
+            activateWarp(intensity, warpDur);
+            playWhoosh(warpDur, intensity);
+        }
+
+        // Narration when arriving
+        const narrateDelay = approachDur * 0.7;
+        cTourTimeout = setTimeout(() => {
+            if (!cTourActive) return;
+            playArrivalChime(index % 9);
+            playSubHit();
+            speakNarration(`Ini adalah rasi bintang ${con.name}. ${con.desc}`);
+        }, narrateDelay);
+
+        let phase = 'approach';
+        let phaseStart = startTime;
+        let holdOrbitAngle = 0;
+
+        function step(now) {
+            if (!cTourActive) return;
+
+            if (phase === 'approach') {
+                let t = Math.min(1, (now - phaseStart) / approachDur);
+                // Slow start, dramatic middle, gentle arrival
+                let ease;
+                if (t < 0.2) ease = 1.5*t*t;
+                else if (t < 0.6) { const m=(t-0.2)/0.4; ease = 0.06+m*m*0.45; }
+                else { const e=(t-0.6)/0.4; ease = 0.51+(1-Math.pow(1-e,4))*0.49; }
+
+                camera.position.lerpVectors(startPos, camPos, ease);
+                controls.target.lerpVectors(startTarget, center, ease);
+
+                // FOV: widen during travel, narrow on arrival
+                if (t < 0.2) camera.fov = 60+t/0.2*12;
+                else if (t < 0.6) camera.fov = 72-((t-0.2)/0.4)*8;
+                else camera.fov = 64-((t-0.6)/0.4)*14;
+                camera.updateProjectionMatrix();
+
+                if (t > 0.55) { nameEl.className = 'visible'; descEl.className = 'visible'; }
+
+                if (t >= 1) {
+                    phase = 'hold'; phaseStart = now;
+                    holdOrbitAngle = 0;
+                    camera.fov = 50; camera.updateProjectionMatrix();
+                }
+            }
+            else if (phase === 'hold') {
+                const t = Math.min(1, (now - phaseStart) / holdDur);
+                // Very gentle drift — slowly pan across the constellation
+                holdOrbitAngle += 0.0015;
+                const driftX = Math.sin(holdOrbitAngle) * 8;
+                const driftY = Math.sin(holdOrbitAngle * 0.7) * 4;
+
+                camera.position.set(
+                    camPos.x + driftX,
+                    camPos.y + driftY,
+                    camPos.z + Math.cos(holdOrbitAngle) * 5
+                );
+                controls.target.copy(center);
+
+                // Very subtle FOV breathe
+                camera.fov = 50 + Math.sin(t*Math.PI*2)*1.5;
+                camera.updateProjectionMatrix();
+
+                if (t >= 1) {
+                    phase = 'depart'; phaseStart = now;
+                    nameEl.className = 'fadeout'; descEl.className = 'fadeout';
+                    playDepartSound();
+                }
+            }
+            else if (phase === 'depart') {
+                let t = Math.min(1, (now - phaseStart) / departDur);
+                const ease = 1 - Math.pow(1-t, 3);
+
+                // Slowly pull back upward
+                const pullTarget = camPos.clone();
+                pullTarget.y += 30;
+                pullTarget.x *= 0.8;
+                pullTarget.z *= 0.8;
+                camera.position.lerp(pullTarget, ease * 0.04);
+                controls.target.lerp(new THREE.Vector3(0, 25, 0), ease * 0.03);
+                camera.fov = 50 + ease*10;
+                camera.updateProjectionMatrix();
+
+                if (t >= 1) {
+                    cTourTimeout = setTimeout(() => cTourVisit(index+1), 200);
+                    return;
+                }
+            }
+
+            cTourAnimId = requestAnimationFrame(step);
+        }
+        cTourAnimId = requestAnimationFrame(step);
+    }
+
+    function cTourFinale() {
+        if (!cTourActive) return;
+        const nameEl = document.getElementById('tour-name');
+        const descEl = document.getElementById('tour-desc');
+        nameEl.textContent = 'TERIMA KASIH';
+        descEl.textContent = 'Planetarium Razan — Keindahan Langit Malam';
+        speakNarration('Terima kasih telah menjelajahi rasi bintang bersama Planetarium Razan. Langit malam selalu menanti untuk dikagumi.');
+        nameEl.className = ''; descEl.className = '';
+        document.querySelectorAll('.tour-dot').forEach(d => d.className = 'tour-dot visited');
+
+        playArrivalChime(0);
+        setTimeout(() => playArrivalChime(4), 200);
+        setTimeout(() => playArrivalChime(7), 400);
+
+        cTourTimeout = setTimeout(() => { if (cTourActive) { nameEl.className = 'visible'; descEl.className = 'visible'; } }, 300);
+
+        const startPos = camera.position.clone();
+        const startTarget = controls.target.clone();
+        const startTime = performance.now();
+
+        function step(now) {
+            if (!cTourActive) return;
+            let t = Math.min(1, (now-startTime)/5000);
+            t = t<0.5 ? 16*t*t*t*t*t : 1-Math.pow(-2*t+2,5)/2;
+            camera.position.lerpVectors(startPos, new THREE.Vector3(30,40,60), t);
+            controls.target.lerpVectors(startTarget, new THREE.Vector3(0,0,0), t);
+            camera.fov = 50+t*10; camera.updateProjectionMatrix();
+            if (t < 1) { cTourAnimId = requestAnimationFrame(step); }
+            else { cTourTimeout = setTimeout(stopConstellationTour, 3000); }
+        }
+        cTourAnimId = requestAnimationFrame(step);
     }
 
     // ============================================================
