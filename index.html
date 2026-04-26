@@ -1622,24 +1622,75 @@
     // ============================================================
     // CONSTELLATIONS & GRID
     // ============================================================
+    let constellationSubGroups = []; // one sub-group per constellation
     function createConstellations() {
         constellationGroup = new THREE.Group();
         constellationGroup.userData.layer = 'constellations';
+        constellationSubGroups = [];
         CONSTELLATIONS.forEach(con => {
+            const subGroup = new THREE.Group();
+            subGroup.userData.conName = con.name;
+
             const geo = new THREE.BufferGeometry();
             const p = []; con.stars.forEach(s => p.push(s[0],s[1],s[2]));
             geo.setAttribute('position', new THREE.Float32BufferAttribute(p,3));
-            constellationGroup.add(new THREE.Points(geo, new THREE.PointsMaterial({ color: 0xaaccff, size: 2.5, transparent: true, opacity: 0.9 })));
+            subGroup.add(new THREE.Points(geo, new THREE.PointsMaterial({ color: 0xaaccff, size: 2.5, transparent: true, opacity: 0.9 })));
+
             con.lines.forEach(([a,b]) => {
                 const lg = new THREE.BufferGeometry();
                 lg.setAttribute('position', new THREE.Float32BufferAttribute([...con.stars[a],...con.stars[b]],3));
-                constellationGroup.add(new THREE.Line(lg, new THREE.LineBasicMaterial({ color: 0x4466aa, transparent: true, opacity: 0.3 })));
+                subGroup.add(new THREE.Line(lg, new THREE.LineBasicMaterial({ color: 0x4466aa, transparent: true, opacity: 0.3 })));
             });
+
             const center = con.stars.reduce((a,s) => [a[0]+s[0]/con.stars.length,a[1]+s[1]/con.stars.length,a[2]+s[2]/con.stars.length],[0,0,0]);
             const lbl = createLabel(con.name); lbl.position.set(center[0],center[1]+5,center[2]); lbl.scale.set(10,2.5,1);
-            constellationGroup.add(lbl);
+            subGroup.add(lbl);
+
+            constellationGroup.add(subGroup);
+            constellationSubGroups.push(subGroup);
         });
         scene.add(constellationGroup);
+    }
+
+    // Highlight one constellation, dim all others
+    function highlightConstellation(index) {
+        constellationSubGroups.forEach((sg, i) => {
+            const isActive = (i === index);
+            sg.traverse(obj => {
+                if (obj.material) {
+                    if (obj.isPoints) {
+                        obj.material.opacity = isActive ? 1.0 : 0.05;
+                        obj.material.size = isActive ? 3.5 : 1.5;
+                        obj.material.color.set(isActive ? 0xddeeff : 0x445566);
+                    } else if (obj.isLine) {
+                        obj.material.opacity = isActive ? 0.7 : 0.03;
+                        obj.material.color.set(isActive ? 0x6699dd : 0x334455);
+                    } else if (obj.isSprite) {
+                        obj.material.opacity = isActive ? 1.0 : 0.05;
+                    }
+                }
+            });
+        });
+    }
+
+    // Restore all constellations to normal
+    function resetConstellationHighlight() {
+        constellationSubGroups.forEach(sg => {
+            sg.traverse(obj => {
+                if (obj.material) {
+                    if (obj.isPoints) {
+                        obj.material.opacity = 0.9;
+                        obj.material.size = 2.5;
+                        obj.material.color.set(0xaaccff);
+                    } else if (obj.isLine) {
+                        obj.material.opacity = 0.3;
+                        obj.material.color.set(0x4466aa);
+                    } else if (obj.isSprite) {
+                        obj.material.opacity = 0.8;
+                    }
+                }
+            });
+        });
     }
 
     function createGrid() {
@@ -2265,6 +2316,7 @@
         controls.enabled = true;
         camera.fov = 60; camera.updateProjectionMatrix();
         stopNarration();
+        resetConstellationHighlight();
         if (!musicPlaying) stopAmbientDrone();
         cinematicMoveTo(new THREE.Vector3(30,40,60), new THREE.Vector3(0,0,0), 2500);
     }
@@ -2337,6 +2389,9 @@
         nameEl.textContent = con.name.toUpperCase();
         descEl.textContent = con.desc || '';
         nameEl.className = ''; descEl.className = '';
+
+        // Highlight only this constellation, dim others
+        highlightConstellation(index);
 
         // Camera: pull back far enough to see the whole constellation pattern
         const dir = center.clone().normalize();
@@ -2494,6 +2549,7 @@
 
     function cTourFinale() {
         if (!cTourActive) return;
+        resetConstellationHighlight();
         const nameEl = document.getElementById('tour-name');
         const descEl = document.getElementById('tour-desc');
         nameEl.textContent = 'TERIMA KASIH';
