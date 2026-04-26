@@ -2338,12 +2338,14 @@
         descEl.textContent = con.desc || '';
         nameEl.className = ''; descEl.className = '';
 
-        // Camera: position outside looking toward the constellation
+        // Camera: pull back far enough to see the whole constellation pattern
         const dir = center.clone().normalize();
-        const camDist = 60; // distance from origin, looking inward at the stars
-        const camPos = dir.clone().multiplyScalar(camDist);
-        // Offset slightly upward for better angle
-        camPos.y += 15;
+        // Position camera between origin and constellation, facing toward it
+        const camPos = center.clone().multiplyScalar(0.4);
+        // Offset upward and sideways for a nice viewing angle
+        const side = new THREE.Vector3(-dir.z, 0, dir.x).normalize();
+        camPos.add(side.multiplyScalar(15));
+        camPos.y += 20;
 
         const startPos = camera.position.clone();
         const startTarget = controls.target.clone();
