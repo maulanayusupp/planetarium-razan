@@ -1849,6 +1849,26 @@
         });
     }
 
+    // Dim ALL constellations (used during planet tour so they don't compete with planets)
+    function dimAllConstellations() {
+        constellationSubGroups.forEach(sg => {
+            sg.traverse(obj => {
+                if (obj.material) {
+                    if (obj.isPoints) {
+                        obj.material.opacity = 0.08;
+                        obj.material.size = 1.5;
+                        obj.material.color.set(0x445566);
+                    } else if (obj.isLine) {
+                        obj.material.opacity = 0.04;
+                        obj.material.color.set(0x334455);
+                    } else if (obj.isSprite) {
+                        obj.material.opacity = 0.06;
+                    }
+                }
+            });
+        });
+    }
+
     // Restore all constellations to normal
     function resetConstellationHighlight() {
         constellationSubGroups.forEach(sg => {
@@ -2174,6 +2194,9 @@
         document.getElementById('info-panel').style.display = 'none';
         controls.enabled = false;
 
+        // Dim constellations so they don't compete with the planets
+        dimAllConstellations();
+
         // Audio — start music if not already playing
         initAudio();
         if (!musicPlaying) startAmbientDrone();
@@ -2202,6 +2225,8 @@
         controls.enabled = true;
         camera.fov = 60; camera.updateProjectionMatrix();
         stopNarration();
+        // Restore constellation visibility
+        resetConstellationHighlight();
         // Only stop music if it wasn't playing before tour
         if (!musicPlaying) stopAmbientDrone();
         cinematicMoveTo(new THREE.Vector3(30,40,60), new THREE.Vector3(0,0,0), 2500);
