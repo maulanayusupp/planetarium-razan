@@ -306,7 +306,10 @@
             /* Hide desktop controls */
             #controls { display: none !important; }
             #sidebar { display: none !important; }
-            #date-display { font-size: 10px; padding: 5px 8px; top: 10px; right: 10px; }
+            #date-display {
+                font-size: 10px; padding: 5px 8px;
+                top: 64px; right: auto; left: 50%; transform: translateX(-50%);
+            }
 
             /* Mobile toolbar */
             #mobile-toolbar {
@@ -2283,10 +2286,14 @@
 
         // Approach: 3s base + up to 4s extra for distance
         const approachDur = 3000 + Math.min(4000, distanceFactor * 800);
-        // Orbit: 5s base — feels more immersive
-        const orbitDur = 5000;
+        // Hold: minimum dwell time — but we also wait for narration to finish
+        const holdMinDur = 8000;
         // Depart: 1.5s base + extra for distance to next
         const departDur = 1500 + Math.min(1500, distanceFactor * 200);
+
+        // Track narration completion (so we don't depart while narrator is still talking)
+        let narrationDone = false;
+        let holdTimerDone = false;
 
         // === SOUND ===
         // Whoosh scales with travel distance
@@ -2302,7 +2309,23 @@
             if (!tourActive) return;
             playArrivalChime(index);
             playSubHit();
-            speakNarration(NARRATION_TEXTS[index]);
+
+            if (narrationEnabled && window.speechSynthesis) {
+                window.speechSynthesis.cancel();
+                const utter = new SpeechSynthesisUtterance(NARRATION_TEXTS[index]);
+                utter.lang = 'id-ID'; utter.rate = 0.85; utter.pitch = 0.9; utter.volume = 1.0;
+                const voices = window.speechSynthesis.getVoices();
+                const v = voices.find(v => v.lang.startsWith('id')) ||
+                          voices.find(v => v.lang.startsWith('ms')) ||
+                          voices.find(v => v.name.includes('Google') && v.lang.startsWith('en')) || null;
+                if (v) utter.voice = v;
+                utter.onend = () => { narrationDone = true; };
+                utter.onerror = () => { narrationDone = true; };
+                currentUtterance = utter;
+                window.speechSynthesis.speak(utter);
+            } else {
+                narrationDone = true;
+            }
         }, chimeDelay);
 
         // === MULTI-PHASE ANIMATION ===
@@ -2311,6 +2334,7 @@
         let startTime = performance.now();
         let phase = 'approach';
         let orbitAngleStart = 0;
+        let pauseAngle = 0;
 
         function step(now) {
             if (!tourActive) return;
@@ -2362,19 +2386,20 @@
                 if (t > 0.55) { nameEl.className = 'visible'; descEl.className = 'visible'; }
 
                 if (t >= 1) {
-                    phase = 'orbit'; startTime = now;
+                    phase = 'hold'; startTime = now;
                     orbitAngleStart = Math.PI * 0.3;
                     camera.fov = 50; camera.updateProjectionMatrix();
                 }
             }
-            else if (phase === 'orbit') {
-                const t = Math.min(1, (now - startTime) / orbitDur);
-                const angle = orbitAngleStart + t * Math.PI * 1.3; // ~230° sweep
+            else if (phase === 'hold') {
+                const elapsed = now - startTime;
+                // Slow leisurely orbit — ~0.45 rad/sec, lets the narration breathe
+                const angle = orbitAngleStart + (elapsed / 1000) * 0.45;
 
                 // Gentle height breathing
-                const heightVar = Math.sin(t * Math.PI * 2) * closeup * 0.15;
+                const heightVar = Math.sin(elapsed * 0.0006) * closeup * 0.15;
                 // Subtle FOV breathe
-                camera.fov = 50 + Math.sin(t * Math.PI * 3) * 2.5;
+                camera.fov = 50 + Math.sin(elapsed * 0.001) * 2.5;
                 camera.updateProjectionMatrix();
 
                 camera.position.set(
@@ -2384,7 +2409,27 @@
                 );
                 controls.target.copy(planetPos);
 
-                if (t >= 1) {
+                if (elapsed >= holdMinDur) holdTimerDone = true;
+
+                // Only advance when BOTH timer done AND narration done
+                if (holdTimerDone && narrationDone) {
+                    pauseAngle = angle;
+                    phase = 'pause-before-depart'; startTime = now;
+                }
+            }
+            else if (phase === 'pause-before-depart') {
+                // Keep drifting gently for 1.5s after narration ends
+                const elapsed = now - startTime;
+                const angle = pauseAngle + (elapsed / 1000) * 0.3;
+
+                camera.position.set(
+                    planetPos.x + Math.cos(angle) * orbitR,
+                    planetPos.y + closeup * 0.4,
+                    planetPos.z + Math.sin(angle) * orbitR
+                );
+                controls.target.copy(planetPos);
+
+                if (elapsed >= 1500) {
                     phase = 'depart'; startTime = now;
                     nameEl.className = 'fadeout'; descEl.className = 'fadeout';
                     playDepartSound();
