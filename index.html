@@ -332,26 +332,35 @@
                 background: rgba(100,150,255,0.2); color: #aaddff;
             }
 
-            /* Mobile speed row */
+            /* Mobile speed row — flush against toolbar, looks like one panel */
             #mobile-speed {
                 display: flex !important;
-                position: fixed; bottom: 68px; left: 50%; transform: translateX(-50%);
-                background: rgba(5,10,25,0.85); border: 1px solid rgba(100,150,255,0.15);
-                border-radius: 10px; padding: 6px 12px; gap: 10px; align-items: center;
-                backdrop-filter: blur(10px); z-index: 20;
+                position: fixed; bottom: 60px; left: 0; right: 0; width: 100%;
+                transform: none;
+                background: rgba(5,10,25,0.92);
+                border: none;
+                border-top: 1px solid rgba(100,150,255,0.15);
+                border-bottom: 1px solid rgba(100,150,255,0.08);
+                border-radius: 0;
+                padding: 6px 12px; gap: 10px;
+                justify-content: center; align-items: center;
+                backdrop-filter: blur(12px); z-index: 20;
             }
             .mob-speed-btn {
-                background: rgba(100,150,255,0.15); border: 1px solid rgba(100,150,255,0.25);
-                color: #aaccff; width: 32px; height: 32px; border-radius: 6px;
-                font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+                background: rgba(100,150,255,0.12); border: 1px solid rgba(100,150,255,0.22);
+                color: #aaccff; width: 30px; height: 30px; border-radius: 6px;
+                font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center;
             }
             .mob-speed-btn:active { background: rgba(100,150,255,0.35); }
-            #mob-speed-val { font-size: 11px; color: rgba(255,255,255,0.5); min-width: 40px; text-align: center; }
+            #mob-speed-val { font-size: 11px; color: rgba(255,255,255,0.6); min-width: 36px; text-align: center; font-weight: 500; }
 
-            /* Info panel mobile — compact, above toolbar */
+            /* Toolbar sits flush at the very bottom — no top border (speed bar provides it) */
+            #mobile-toolbar { border-top: none; }
+
+            /* Info panel mobile — compact, above the merged speed+toolbar panel */
             #info-panel {
                 width: calc(100% - 16px); left: 8px; right: 8px;
-                top: auto; bottom: 115px;
+                top: auto; bottom: 110px;
                 max-height: 30vh; border-radius: 10px;
                 font-size: 11px;
             }
@@ -359,9 +368,6 @@
             #info-panel h3 { font-size: 15px; }
             #info-content { padding: 6px 14px 10px; }
             #info-description { padding: 6px 14px 10px; font-size: 11px; }
-
-            /* Speed bar above toolbar */
-            #mobile-speed { bottom: 58px; }
 
             /* Follow bar — top of screen on mobile */
             #follow-bar {
